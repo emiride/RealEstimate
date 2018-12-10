@@ -1,13 +1,15 @@
 import requests
-from queue import Queue, deque
+from queue import Queue
 from bs4 import BeautifulSoup
 from time import sleep
 import sys
 import pandas as pd
 import re
+import datetime
+
 
 class OLXScraper(object):
-    def __init__(self, category=18, from_page=1, to_page=5000, links_file=True, data_file=True, no_of_threads=1):
+    def __init__(self, category=18, from_page=1, to_page=5000, links_file=True, data_file=True, no_of_threads=5):
         """
         OLX Scraper needs some initial attributes to work:
         :param category: integer that represents the category(e.g. category 18 are cars)
@@ -36,7 +38,8 @@ class OLXScraper(object):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
         if self.links_file:
-            links_file = open("links2.txt", "w")
+
+            links_file = open("links_" + datetime.datetime.today().strftime('%Y_%m_%d') + ".txt", "w")
 
         print("Number of pages: " + str(self.urls.qsize()))
         while not self.urls.empty():
@@ -114,7 +117,7 @@ class OLXScraper(object):
         single_list = list(self.main_list.queue)
         df = pd.DataFrame(single_list)
         if self.data_file:
-            df.to_csv("data2.csv", encoding="utf-8", na_rep="NaN", index=False)
+            df.to_csv("data_" + datetime.datetime.today().strftime('%Y_%m_%d') + ".csv", encoding="utf-8", na_rep="NaN", index=False)
         return df
 
     def __get_latitude(self, soup):
@@ -159,8 +162,15 @@ class OLXScraper(object):
             return 'NaN'
 
 
+# flats = 23
+# houses = 24
+# lands = 29
+# offices = 25
+# weekend_houses = 26
+# apartments = 27
+# rooms = 28
+# garages = 30
+
 scraper = OLXScraper(category=23, from_page=1)
-links = open(r"C:\Users\emir.hodzic\Documents\FAX\OLX-Scraper-master\links2.txt").read().splitlines()#scraper.link_scraper()
-q = Queue()
-[q.put(i) for i in links]
-scraper.scrape_page(q)
+links = scraper.scrape_links()
+scraper.scrape_page(links)
